@@ -53,6 +53,17 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+
+    //PUBLIC audio processor value tree state
+    //this audio processor
+    //no undoparameter
+    //need all parameters laid out before the tree is created
+    static juce::AudioProcessorValueTreeState::ParameterLayout
+        createParameterLayout();
+    
+    juce::AudioProcessorValueTreeState apvts{ *this, nullptr, "Paremeters", createParameterLayout() };
+
+
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
