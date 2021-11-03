@@ -54,9 +54,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 
-    //PUBLIC audio processor value tree state
-    //this audio processor
-    //no undoparameter
+    // audio processor value tree state
     //need all parameters laid out before the tree is created
     static juce::AudioProcessorValueTreeState::ParameterLayout
         createParameterLayout();
@@ -65,6 +63,20 @@ public:
 
 
 private:
+    //aliases are useful for nested namespaces
+    using Filter = juce::dsp::IIR::Filter<float>;
+
+    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+
+    //Can uses filters in notch, peaks, shelfs, etc.
+
+    //Monochain is Lowcut -> Parametric -> HighCut, this is the whole signal chain
+    using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+
+    MonoChain leftChain, rightChain;
+
+    //define chains
+    // pass in processing contexts, which will run through chain automatically
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
 };
