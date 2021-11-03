@@ -254,13 +254,19 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
 }
 
 
+//free function to be used in processing and drawing
+Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate)
+{
+    //returns something that makes the peak filter
+    return juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate,
+        chainSettings.peakFreq, chainSettings.peakQuality,
+        juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
+}
+
 //helper function to update Peak Filter
 void SimpleEQAudioProcessor::updatePeakFilter(const ChainSettings& chainSettings)
 {
-    auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(),
-        chainSettings.peakFreq, chainSettings.peakQuality,
-        juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
-
+    auto peakCoefficients = makePeakFilter(chainSettings, getSampleRate());
 
     //The chain is in the order of lowcut, peak, highcut
     //This means that ChainPositions::Peak is accessing the second position in 
@@ -269,7 +275,8 @@ void SimpleEQAudioProcessor::updatePeakFilter(const ChainSettings& chainSettings
     updateCoefficients(rightChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
 }
 
-void SimpleEQAudioProcessor::updateCoefficients(Coefficients& old, const Coefficients &replacements)
+//This is now a free function
+void updateCoefficients(Coefficients& old, const Coefficients &replacements)
 {
     *old = *replacements;
 }
