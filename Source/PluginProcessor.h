@@ -29,6 +29,27 @@ struct ChainSettings
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
+
+//define chains
+    //pass in processing contexts, which will run through chain automatically
+    //aliases are useful for nested namespaces
+using Filter = juce::dsp::IIR::Filter<float>;
+
+using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+
+//Can uses filters in notch, peaks, shelfs, etc.
+
+//Monochain is Lowcut -> Parametric -> HighCut, this is the whole signal chain
+using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+
+enum ChainPositions
+{
+    LowCut,
+    Peak,
+    HighCut
+};
+
+
 //==============================================================================
 /**
 */
@@ -82,26 +103,7 @@ public:
 
 
 private:
-    //define chains
-    //pass in processing contexts, which will run through chain automatically
-    //aliases are useful for nested namespaces
-    using Filter = juce::dsp::IIR::Filter<float>;
-
-    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-
-    //Can uses filters in notch, peaks, shelfs, etc.
-
-    //Monochain is Lowcut -> Parametric -> HighCut, this is the whole signal chain
-    using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
-
     MonoChain leftChain, rightChain;
-
-    enum ChainPositions 
-    {
-        LowCut,
-        Peak,
-        HighCut
-    };
 
 
     //Refactoring using helper functions
