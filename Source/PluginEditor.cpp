@@ -14,9 +14,9 @@ ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) : audi
     const auto& params = audioProcessor.getParameters();
     for (auto param : params)
     {
+        //add listeners to all audio paramters
         param->addListener(this);
     }
-
 
     //starting the timer
     startTimerHz(60);
@@ -30,9 +30,6 @@ ResponseCurveComponent::~ResponseCurveComponent()
         param->removeListener(this);
     }
 }
-
-
-
 
 void ResponseCurveComponent::parameterValueChanged(int parameterIndex, float newValue)
 {
@@ -55,7 +52,6 @@ void ResponseCurveComponent::timerCallback()
 
         auto lowCutCoefficients = makeLowCutFilter(chainSettings,
             audioProcessor.getSampleRate());
-
         auto highCutCoefficients = makeHighCutFilter(chainSettings,
             audioProcessor.getSampleRate());
         updateCutFilter(monoChain.get<ChainPositions::LowCut>(),

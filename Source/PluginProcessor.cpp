@@ -10,6 +10,7 @@
 #include "PluginEditor.h"
 
 //==============================================================================
+//Did not modify constructor
 SimpleEQAudioProcessor::SimpleEQAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
@@ -95,19 +96,19 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-
-    //Process spec object --- prepares filters before use
+    // Process spec object --- prepares filters before use
+    // has fields sample rate, block size, and numChannels
     juce::dsp::ProcessSpec spec;
 
     spec.maximumBlockSize = samplesPerBlock;
-
     spec.numChannels = 1;
-
     spec.sampleRate = sampleRate;
 
+    //necessary to prepare the process specs
     leftChain.prepare(spec);
     rightChain.prepare(spec);
 
+    //does the work of updating all audio filters
     updateFilters();
 }
 
@@ -142,6 +143,8 @@ bool SimpleEQAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
   #endif
 }
 #endif
+
+
 
 void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
@@ -184,10 +187,6 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     rightChain.process(rightContext);
 
 
-
-
-
-
 }
 
 //==============================================================================
@@ -223,6 +222,7 @@ void SimpleEQAudioProcessor::setStateInformation(const void* data, int sizeInByt
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
 
+    //set state information
     auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
     if (tree.isValid())
     {
@@ -235,13 +235,12 @@ void SimpleEQAudioProcessor::setStateInformation(const void* data, int sizeInByt
 //==============================================================================
 // This creates new instances of the plugin..
 
-
 //Chain settings struct
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
 {
     ChainSettings settings;
 
-
+    //sets the chain settings to those in the audio processor tree
     settings.lowCutFreq = apvts.getRawParameterValue("LowCut Freq")->load();
     settings.highCutFreq = apvts.getRawParameterValue("HighCut Freq")->load();
     settings.peakFreq = apvts.getRawParameterValue("Peak Freq")->load();
@@ -258,6 +257,7 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
 Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate)
 {
     //returns something that makes the peak filter
+    //returns makePeakFilter, which returns a peak filter made
     return juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate,
         chainSettings.peakFreq, chainSettings.peakQuality,
         juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
@@ -271,6 +271,8 @@ void SimpleEQAudioProcessor::updatePeakFilter(const ChainSettings& chainSettings
     //The chain is in the order of lowcut, peak, highcut
     //This means that ChainPositions::Peak is accessing the second position in 
     //the array
+    //sets coefficients in our leftChain and rightChain to the peakCoefficients returned from
+    //our previous function call
     updateCoefficients(leftChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
     updateCoefficients(rightChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
 }
@@ -283,8 +285,13 @@ void updateCoefficients(Coefficients& old, const Coefficients &replacements)
 
 void SimpleEQAudioProcessor::updateLowCutFilters(const ChainSettings& chainSettings)
 {
+    //makes a lowcutfilter with our chain settings and sample rate, gets coefficients
     auto lowCutCoefficients = makeLowCutFilter(chainSettings, getSampleRate());
+
+    //gets reference to the low cut processor
     auto& leftLowCut = leftChain.get<ChainPositions::LowCut>();
+    
+    //updates the cut filter of leftLowCut (old in chain) to new (lowCutCoefficients)
     updateCutFilter(leftLowCut, lowCutCoefficients, chainSettings.lowCutSlope);
     auto& rightLowCut = rightChain.get<ChainPositions::LowCut>();
     updateCutFilter(rightLowCut, lowCutCoefficients, chainSettings.lowCutSlope);
@@ -298,7 +305,6 @@ void SimpleEQAudioProcessor::updateHighCutFilters(const ChainSettings& chainSett
     updateCutFilter(rightHighCut, highCutCoefficients, chainSettings.highCutSlope);
 }
 
-
 void SimpleEQAudioProcessor::updateFilters()
 {
     auto chainSettings = getChainSettings(apvts);
@@ -307,7 +313,6 @@ void SimpleEQAudioProcessor::updateFilters()
     updatePeakFilter(chainSettings);
     updateHighCutFilters(chainSettings);
 }
-
 
 
 juce::AudioProcessorValueTreeState::ParameterLayout
